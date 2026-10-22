@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScreenRecz: a tiny screen recorder for Mac</title>
+<meta name="description" content="A 1 MB menu-bar app that records your screen, camera, mic and system audio into one web-ready MP4. Free and open source.">
+<meta name="theme-color" content="#FFF9F3">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta property="og:title" content="ScreenRecz: a tiny screen recorder for Mac">
+<meta property="og:description" content="Screen, camera, mic and system audio in one tidy MP4. Free and open source.">
+<meta property="og:image" content="https://avirooppaul.github.io/screen-recz/icon.png">
+<meta property="og:url" content="https://avirooppaul.github.io/screen-recz/">
+<meta name="twitter:card" content="summary">
+<style>
+:root {
+  --bg: #F7F6F3;
+  --card: #FFFFFF;
+  --soft: #EFEDE8;
+  --ink: #1F1E23;
+  --muted: #6D6B72;
+  --faint: #9A979F;
+  --line: #E4E1DB;
+  --rec: #E5484D;
+  --accent: #A65A3F;
+  --sage: #E4EADF;  --sage-d: #4E6A49;
+  --clay: #F2E2D8;  --clay-d: #A0533A;
+  --ochre: #F1E7D0; --ochre-d: #86671E;
+  --slate: #E1E7EE; --slate-d: #3E5878;
+  --plum: #EBE0E7;  --plum-d: #7A4B67;
+  --teal: #DDE8E5;  --teal-d: #3A6A63;
+  --round: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+a { color: inherit; }
+img { display: block; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 8px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { font-family: var(--round); letter-spacing: -0.02em; line-height: 1.08; margin: 0; }
+
+/* Nav */
+nav { position: sticky; top: 0; z-index: 10; background: rgba(247,246,243,.82); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid transparent; transition: border-color .2s; }
+nav.scrolled { border-color: var(--line); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 18px var(--round); text-decoration: none; }
+.brand img { width: 32px; height: 32px; }
+.links { display: flex; align-items: center; gap: 6px; }
+.links a { text-decoration: none; font-size: 15px; color: var(--muted); padding: 8px 12px; border-radius: 999px; transition: background .15s, color .15s; }
+.links a:hover { color: var(--ink); background: var(--soft); }
+.links a.gh { color: var(--ink); background: var(--card); border: 1px solid var(--line); }
+
+/* Hero */
+.hero { position: relative; text-align: center; padding: 72px 0 40px; }
+.hero-icon { width: 104px; height: 104px; margin: 0 auto 28px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.14)); }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--muted); background: var(--card); border: 1px solid var(--line); padding: 5px 14px; border-radius: 999px; margin-bottom: 22px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 0 3px rgba(229,72,77,.15); }
+.hero h1 { font-size: clamp(42px, 7.4vw, 80px); font-weight: 800; max-width: 900px; margin: 0 auto; text-wrap: balance; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p.sub { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 600px; margin: 22px auto 34px; }
+.ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 10px; font: 600 16px var(--sans); text-decoration: none; padding: 14px 24px; border-radius: 999px; border: 1px solid transparent; cursor: pointer; transition: transform .15s, box-shadow .15s, background .15s; }
+.btn:hover { transform: translateY(-1px); }
+.btn.primary { background: var(--ink); color: #fff; }
+.btn.secondary { background: var(--card); border-color: var(--line); box-shadow: var(--shadow); }
+.btn svg { width: 18px; height: 18px; }
+.fine { font-size: 14px; color: var(--muted); margin-top: 18px; }
+
+/* Demo */
+.demo { padding: 40px 0 24px; }
+.desk {
+  position: relative; aspect-ratio: 16 / 10; width: 100%; border-radius: 22px; overflow: hidden;
+  background: linear-gradient(170deg, #C5CFC0 0%, #DCD5C3 48%, #D6B7A2 100%);
+  border: 1px solid var(--line); box-shadow: 0 30px 60px -36px rgba(0,0,0,.35);
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.menubar { position: absolute; inset: 0 0 auto; height: 5.5%; background: rgba(255,255,255,.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 0 2%; }
+.menubar .left, .menubar .right { display: flex; align-items: center; gap: 14px; }
+.menubar b { display: block; height: 7px; border-radius: 4px; background: rgba(0,0,0,.16); }
+.recicon { width: 16px; height: 16px; color: rgba(0,0,0,.55); transition: color .2s; }
+.desk.rec .recicon { color: var(--rec); }
+.win { position: absolute; background: #FBFAF8; border-radius: 12px; box-shadow: 0 16px 32px -20px rgba(0,0,0,.3); border: 1px solid rgba(0,0,0,.05); overflow: hidden; }
+.win .bar { height: 26px; display: flex; gap: 6px; align-items: center; padding: 0 10px; border-bottom: 1px solid #EEECE7; }
+.win .bar span { width: 9px; height: 9px; border-radius: 50%; background: #DAD7D1; }
+.win .body { padding: 6% 7%; display: grid; gap: 10px; }
+.win .body i { display: block; height: 9px; border-radius: 5px; background: #ECEAE5; }
+.w1 { left: 7%; top: 13%; width: 52%; height: 62%; }
+.w2 { left: 46%; top: 26%; width: 46%; height: 58%; }
+.w2 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+.w2 .tiles i { height: 46px; border-radius: 8px; }
+.w2 .tiles i:nth-child(1) { background: var(--sage); } .w2 .tiles i:nth-child(2) { background: var(--clay); } .w2 .tiles i:nth-child(3) { background: var(--slate); }
+.bubble {
+  position: absolute; left: 6%; top: 58%; width: 18.75%; height: 30%;
+  border-radius: 50%; overflow: hidden; cursor: grab;
+  background: linear-gradient(170deg, #C3CFDA, #AAB8C6);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.95), 0 16px 30px -14px rgba(0,0,0,.45);
+  transition: width .32s cubic-bezier(.3,.7,.2,1), border-radius .32s cubic-bezier(.3,.7,.2,1);
+}
+.bubble.dragging { cursor: grabbing; transition: none; }
+.bubble[data-shape="rounded"] { border-radius: 22%; }
+.bubble[data-shape="square"] { border-radius: 2px; }
+.bubble[data-shape="wide"] { width: 33.33%; border-radius: 12% / 21%; }
+.bubble svg { position: absolute; left: 50%; bottom: 0; height: 92%; transform: translateX(-50%); }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; margin-top: 26px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px; box-shadow: var(--shadow); }
+.seg button, .recbtn { font: 600 14px var(--sans); color: var(--muted); background: none; border: 0; padding: 9px 16px; border-radius: 999px; cursor: pointer; transition: background .15s, color .15s; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.recbtn { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); color: var(--ink); padding: 13px 20px; box-shadow: var(--shadow); }
+.recbtn::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--rec); transition: border-radius .2s; }
+.recbtn[aria-pressed="true"] { border-color: var(--rec); color: var(--rec); }
+.recbtn[aria-pressed="true"]::before { border-radius: 2px; }
+.hint { text-align: center; font-size: 14px; color: var(--muted); margin-top: 14px; }
+
+/* Sections */
+section { padding: 96px 0 0; }
+.eyebrow { font: 700 13px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.head { max-width: 640px; margin-bottom: 44px; }
+.head h2 { font-size: clamp(32px, 4.6vw, 48px); font-weight: 800; }
+.head p { color: var(--muted); font-size: 18px; margin: 16px 0 0; }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card { background: var(--card); border-radius: 20px; padding: 28px; border: 1px solid var(--line); transition: transform .2s, border-color .2s; }
+.card:hover { transform: translateY(-3px); border-color: #D3CFC7; }
+.card .ic { width: 48px; height: 48px; border-radius: 12px; background: var(--c, var(--soft)); display: grid; place-items: center; color: var(--d, var(--ink)); margin-bottom: 20px; }
+.card .ic svg { width: 24px; height: 24px; }
+.card h3 { font-size: 21px; font-weight: 700; margin-bottom: 8px; }
+.card p { margin: 0; font-size: 15.5px; color: var(--muted); }
+
+.t-sage { --c: var(--sage); --d: var(--sage-d); } .t-clay { --c: var(--clay); --d: var(--clay-d); }
+.t-ochre { --c: var(--ochre); --d: var(--ochre-d); } .t-slate { --c: var(--slate); --d: var(--slate-d); }
+.t-plum { --c: var(--plum); --d: var(--plum-d); } .t-teal { --c: var(--teal); --d: var(--teal-d); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 18px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; box-shadow: var(--shadow); }
+.stat strong { display: block; font: 800 30px var(--round); letter-spacing: -0.02em; }
+.stat span { font-size: 14px; color: var(--muted); }
+
+/* Install */
+.steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; counter-reset: s; }
+.step { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 26px 28px 28px; box-shadow: var(--shadow); counter-increment: s; }
+.step::before { content: counter(s); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--c, var(--soft)); color: var(--d, var(--ink)); font: 700 16px var(--round); margin-bottom: 16px; }
+.step h3 { font-size: 19px; margin-bottom: 6px; }
+.step p { margin: 0; color: var(--muted); font-size: 15.5px; }
+.code { position: relative; margin-top: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px 84px 14px 16px; font: 13.5px/1.55 var(--mono); color: var(--ink); overflow-x: auto; white-space: pre; }
+.copy { position: absolute; top: 9px; right: 9px; font: 600 13px var(--sans); background: var(--card); border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.copy.done { background: var(--ink); color: #fff; border-color: var(--ink); }
+kbd { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 8px; font: 600 16px var(--sans); background: var(--card); border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 9px; color: var(--ink); }
+.keys { display: flex; gap: 6px; margin-top: 14px; }
+.build { margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 26px 28px; box-shadow: var(--shadow); }
+.build h3 { font-size: 19px; }
+.build p { margin: 6px 0 0; color: var(--muted); font-size: 15.5px; }
+
+/* CTA + footer */
+.final { margin-top: 96px; text-align: center; background: #2F3B33; color: #F3EFE6; border-radius: 28px; padding: 64px 24px; }
+.final .btn.primary { background: #F3EFE6; color: #2F3B33; }
+.final .btn.secondary { background: transparent; color: #F3EFE6; border-color: rgba(243,239,230,.3); box-shadow: none; }
+.final h2 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; margin-bottom: 26px; }
+footer { padding: 48px 0 56px; color: var(--muted); font-size: 14.5px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+footer a { color: var(--ink); text-decoration-color: var(--line); text-underline-offset: 3px; }
+footer nav { position: static; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; display: flex; gap: 18px; }
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .t-sage { --c: var(--sage); --d: var(--sage-d); } .t-clay { --c: var(--clay); --d: var(--clay-d); }
+.t-ochre { --c: var(--ochre); --d: var(--ochre-d); } .t-slate { --c: var(--slate); --d: var(--slate-d); }
+.t-plum { --c: var(--plum); --d: var(--plum-d); } .t-teal { --c: var(--teal); --d: var(--teal-d); }
+.stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .wrap { padding: 0 16px; }
+  .links a:not(.gh) { display: none; }
+  .hero { padding-top: 48px; }
+  .hero-icon { width: 84px; height: 84px; }
+  .grid, .steps { grid-template-columns: 1fr; }
+  .stat strong { font-size: 24px; }
+  .desk { border-radius: 14px; }
+  .menubar .left b:nth-child(n+3), .win .bar { display: none; }
+  .win .body { gap: 6px; } .win .body i { height: 6px; }
+  .w2 .tiles i { height: 24px; }
+  .seg button { padding: 8px 11px; }
+  section { padding-top: 72px; }
+  .final { border-radius: 22px; padding: 48px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<nav id="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="favicon.png" alt="" width="32" height="32">ScreenRecz</a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/AviroopPaul/screen-recz">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+  <header class="hero">
+    <div class="wrap">
+      <img class="hero-icon" src="icon.png" alt="ScreenRecz app icon" width="104" height="104">
+      <div class="pill">Free and open source</div>
+      <h1>The screen recorder that <em>stays out of your way.</em></h1>
+      <p class="sub">Screen, camera, mic and system audio in one tidy MP4. A 1 MB menu-bar app for Mac.</p>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/AviroopPaul/screen-recz/releases/latest/download/ScreenRecz.zip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
+          Download for Mac
+        </a>
+        <a class="btn secondary" href="https://github.com/AviroopPaul/screen-recz">View on GitHub</a>
+      </div>
+      <p class="fine">macOS 15 or later · Apple Silicon</p>
+    </div>
+  </header>
+
+  <div class="demo wrap" aria-label="Interactive demo">
+    <div class="desk" id="desk">
+      <div class="menubar" aria-hidden="true">
+        <div class="left"><b style="width:14px;background:rgba(0,0,0,.45)"></b><b style="width:46px"></b><b style="width:34px"></b><b style="width:40px"></b></div>
+        <div class="right">
+          <svg class="recicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></svg>
+          <b style="width:30px"></b><b style="width:44px"></b>
+        </div>
+      </div>
+      <div class="win w1" aria-hidden="true">
+        <div class="bar"><span></span><span></span><span></span></div>
+        <div class="body"><i style="width:48%;background:#DCD9D3"></i><i></i><i style="width:86%"></i><i style="width:92%"></i><i style="width:64%"></i><i style="width:78%"></i></div>
+      </div>
+      <div class="win w2" aria-hidden="true">
+        <div class="bar"><span></span><span></span><span></span></div>
+        <div class="body"><i style="width:40%;background:#DCD9D3"></i><i style="width:90%"></i><div class="tiles"><i></i><i></i><i></i></div><i style="width:70%"></i></div>
+      </div>
+      <div class="bubble" id="bubble" data-shape="circle" tabindex="0" role="img" aria-label="Camera bubble. Drag it, or use the arrow keys to move it.">
+        <svg viewBox="0 0 120 110" aria-hidden="true">
+          <path d="M14 110c2-24 22-38 46-38s44 14 46 38z" fill="#5D6270"/>
+          <path d="M48 66h24v12a12 12 0 0 1-24 0z" fill="#DDB096"/>
+          <ellipse cx="60" cy="44" rx="24" ry="27" fill="#E8C2AA"/>
+          <path d="M35 42c-2-20 12-30 26-30 15 0 27 9 25 29-6-9-15-13-25-13-12 0-20 5-26 14z" fill="#3B2F4F"/>
+          <circle cx="51" cy="47" r="2.6" fill="#3B2F4F"/><circle cx="69" cy="47" r="2.6" fill="#3B2F4F"/>
+          <path d="M53 57c4 4 10 4 14 0" fill="none" stroke="#3B2F4F" stroke-width="2.4" stroke-linecap="round"/>
+                  </svg>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Camera shape">
+        <button type="button" data-shape="circle" aria-pressed="true">Circle</button>
+        <button type="button" data-shape="rounded" aria-pressed="false">Rounded</button>
+        <button type="button" data-shape="square" aria-pressed="false">Square</button>
+        <button type="button" data-shape="wide" aria-pressed="false">Wide</button>
+      </div>
+      <button type="button" class="recbtn" id="recbtn" aria-pressed="false">Record</button>
+    </div>
+    <p class="hint">Try it: drag the camera, change its shape, hit record. The menu bar icon just turns red.</p>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">Features</div>
+        <h2>Everything a quick recording needs. Nothing it doesn't.</h2>
+        <p>No account, no editor, no uploads. Hit a key, talk, hit it again, share the file.</p>
+      </div>
+      <div class="grid">
+        <article class="card t-slate">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="3.2"/><path d="M6.5 18.5a6.5 6.5 0 0 1 11 0"/><circle cx="12" cy="12" r="9"/></svg></div>
+          <h3>Camera overlay</h3>
+          <p>A floating bubble you can drag anywhere, even mid-recording. Circle, rounded, square or wide. Scroll or pinch to resize.</p>
+        </article>
+        <article class="card t-sage">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></div>
+          <h3>Echo-free audio</h3>
+          <p>Mic and system audio in one track. Apple's voice processing removes speaker bleed, and your music doesn't get ducked.</p>
+        </article>
+        <article class="card t-clay">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9.5 4.5 2.5-4.5 2.5z"/></svg></div>
+          <h3>Web-ready MP4</h3>
+          <p>H.264 and AAC at 1080p, fast-start, so it plays instantly in Slack, WhatsApp and any browser.</p>
+        </article>
+        <article class="card t-ochre">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/></svg></div>
+          <h3>Tiny and fast</h3>
+          <p>Native Swift on ScreenCaptureKit and the hardware video encoder. About 1 MB, with no dependencies.</p>
+        </article>
+        <article class="card t-plum">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg></div>
+          <h3>Discreet indicator</h3>
+          <p>The menu bar icon just turns red. No timer, no banner, and the app's own menus never show up in your video.</p>
+        </article>
+        <article class="card t-teal">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></div>
+          <h3>Private by default</h3>
+          <p>No account, no cloud, no telemetry. Recordings go straight to your Pictures folder and stay there.</p>
+        </article>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong>1 MB</strong><span>App size</span></div>
+        <div class="stat"><strong>1080p</strong><span>30 fps, H.264</span></div>
+        <div class="stat"><strong>~5 MB</strong><span>Per minute of video</span></div>
+        <div class="stat"><strong>⌃⌥⌘R</strong><span>Start or stop anywhere</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">Install</div>
+        <h2>Up and recording in a minute.</h2>
+      </div>
+      <div class="steps">
+        <div class="step t-slate">
+          <h3>Download and unzip</h3>
+          <p>Grab <a href="https://github.com/AviroopPaul/screen-recz/releases/latest/download/ScreenRecz.zip">ScreenRecz.zip</a> and drag ScreenRecz.app into Applications.</p>
+        </div>
+        <div class="step t-ochre">
+          <h3>Let it open</h3>
+          <p>The app isn't notarized, so macOS blocks the first launch. Click Open Anyway in System Settings &gt; Privacy &amp; Security, or run:</p>
+          <div class="code"><span>xattr -dr com.apple.quarantine /Applications/ScreenRecz.app</span><button type="button" class="copy">Copy</button></div>
+        </div>
+        <div class="step t-sage">
+          <h3>Allow access</h3>
+          <p>Grant Screen &amp; System Audio Recording, Camera and Microphone when asked, then relaunch the app.</p>
+        </div>
+        <div class="step t-clay">
+          <h3>Record</h3>
+          <p>Press the shortcut from anywhere. Press it again to stop, and Finder shows your MP4.</p>
+          <div class="keys" aria-label="Control Option Command R"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>R</kbd></div>
+        </div>
+      </div>
+      <div class="build">
+        <h3>Build from source</h3>
+        <p>Needs the Xcode Command Line Tools.</p>
+        <div class="code"><span>git clone https://github.com/AviroopPaul/screen-recz &amp;&amp; cd screen-recz &amp;&amp; ./scripts/build.sh --install</span><button type="button" class="copy">Copy</button></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="final">
+      <h2>Hit record. Share the file. Done.</h2>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/AviroopPaul/screen-recz/releases/latest/download/ScreenRecz.zip">Download for Mac</a>
+        <a class="btn secondary" href="https://github.com/AviroopPaul/screen-recz">Star on GitHub</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Made by <a href="https://avirooppaul.site">Aviroop Paul</a>. Released under the <a href="https://github.com/AviroopPaul/screen-recz/blob/main/LICENSE">MIT License</a>.</span>
+    <nav aria-label="Footer"><a href="https://github.com/AviroopPaul/screen-recz">GitHub</a><a href="https://github.com/AviroopPaul/screen-recz/releases">Releases</a></nav>
+  </div>
+</footer>
+
+<script>
+const nav = document.getElementById('nav');
+addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+// Draggable camera bubble, positioned in % so it scales with the mock desktop.
+const desk = document.getElementById('desk');
+const bubble = document.getElementById('bubble');
+function place(x, y) {
+  const d = desk.getBoundingClientRect(), b = bubble.getBoundingClientRect();
+  const top = d.height * 0.055;
+  x = Math.min(Math.max(x, 0), d.width - b.width);
+  y = Math.min(Math.max(y, top), d.height - b.height);
+  bubble.style.left = (x / d.width * 100) + '%';
+  bubble.style.top = (y / d.height * 100) + '%';
+}
+function current() {
+  const d = desk.getBoundingClientRect(), b = bubble.getBoundingClientRect();
+  return [b.left - d.left, b.top - d.top];
+}
+let grab = null;
+bubble.addEventListener('pointerdown', e => {
+  const [x, y] = current();
+  grab = { dx: e.clientX - x, dy: e.clientY - y };
+  bubble.setPointerCapture(e.pointerId);
+  bubble.classList.add('dragging');
+});
+bubble.addEventListener('pointermove', e => { if (grab) place(e.clientX - grab.dx, e.clientY - grab.dy); });
+const drop = () => { grab = null; bubble.classList.remove('dragging'); };
+bubble.addEventListener('pointerup', drop);
+bubble.addEventListener('pointercancel', drop);
+bubble.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 40 : 12, k = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (!k) return;
+  e.preventDefault();
+  const [x, y] = current();
+  place(x + k[0], y + k[1]);
+});
+
+// Shapes: keep the bubble inside the desktop once the size transition settles.
+document.querySelectorAll('.seg button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+  bubble.dataset.shape = btn.dataset.shape;
+  setTimeout(() => { const [x, y] = current(); place(x, y); }, 340);
+}));
+addEventListener('resize', () => { const [x, y] = current(); place(x, y); });
+
+const recbtn = document.getElementById('recbtn');
+recbtn.addEventListener('click', () => {
+  const on = desk.classList.toggle('rec');
+  recbtn.setAttribute('aria-pressed', on);
+  recbtn.textContent = on ? 'Stop' : 'Record';
+});
+
+document.querySelectorAll('.copy').forEach(btn => btn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(btn.previousElementSibling.textContent);
+    btn.textContent = 'Copied'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1600);
+  } catch { btn.textContent = 'Select it'; }
+}));
+</script>
+</body>
+</html>
