@@ -18,6 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var starting = false
     private var finalizing = false
     private var cameraDeniedAlerted = false
+    private var recordingStartedAt: Date?
+    private var elapsedItem: NSMenuItem?
+    private var elapsedTimer: Timer?
 
     private var isRecording: Bool { recorder.isRecording }
 
@@ -82,6 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: Status item
 
     private func refreshStatusItem() {
+        if !isRecording { recordingStartedAt = nil }
         guard let button = statusItem.button else { return }
         // Icon only, never text: while recording it just turns red, so it reads as an ordinary icon when screen sharing.
         setIcon(isRecording ? "record.circle.fill" : "record.circle", red: isRecording)
@@ -145,6 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 overlayWindowID: CGWindowID(overlay.panel.windowNumber))
             do {
                 try await recorder.start(options)
+                recordingStartedAt = Date()
                 refreshStatusItem()
             } catch {
                 refreshStatusItem()
@@ -208,6 +213,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.removeAllItems()
         let busy = isRecording || finalizing || starting
 
+        // Elapsed time lives only in the menu, so the status item stays a plain icon.
+        elapsedItem = nil
+        if isRecording, recordingStartedAt != nil {
+            let elapsed = item("", #selector(toggleRecording), enabled: false)
+            elapsedItem = elapsed
+            updateElapsed()
+            menu.addItem(elapsed)
+        }
         let toggle = item(isRecording ? "Stop Recording" : "Start Recording", #selector(toggleRecording), enabled: !finalizing)
         toggle.keyEquivalent = "r"
         toggle.keyEquivalentModifierMask = [.control, .option, .command]
@@ -260,6 +273,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(item("Open Recordings Folder", #selector(openFolder)))
         menu.addItem(item("Quit", #selector(quit)))
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        guard elapsedItem != nil else { return }
+        // .common so it keeps ticking while the menu is tracking events.
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateElapsed() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        elapsedTimer = timer
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        elapsedTimer?.invalidate()
+        elapsedTimer = nil
+    }
+
+    private func updateElapsed() {
+        guard let elapsedItem, let start = recordingStartedAt else { return }
+        let total = max(0, Int(Date().timeIntervalSince(start)))
+        let (h, m, s) = (total / 3600, total / 60 % 60, total % 60)
+        let time = h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%02d:%02d", m, s)
+        elapsedItem.attributedTitle = NSAttributedString(string: "Recording  \(time)", attributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuFont(ofSize: 0).pointSize, weight: .regular),
+            .foregroundColor: NSColor.secondaryLabelColor,
+        ])
     }
 
     private func item(_ title: String, _ action: Selector, on: Bool = false, enabled: Bool = true,

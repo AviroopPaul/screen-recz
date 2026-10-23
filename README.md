@@ -12,7 +12,7 @@
 - **Echo-free audio**: mic and system audio are mixed into one track. Apple's voice processing removes speaker sound from the mic, without ducking your other audio. Turn it off when you wear headphones.
 - **Web-ready MP4**: H.264 + AAC, 1080p 30fps, fast-start. About 40 to 60 MB per 10 minutes. Saved to `~/Pictures/screen-recz`.
 - **Tiny and fast**: native Swift on ScreenCaptureKit and the hardware video encoder. About 1 MB, no dependencies.
-- **Discreet**: the menu bar icon just turns red while recording, with no timer. The app's own menus are hidden from recordings.
+- **Discreet**: the menu bar icon just turns red while recording, with no timer. Open the menu to see the elapsed time above Stop Recording. The app's own menus are hidden from recordings.
 - **Private**: no account, no network, no telemetry.
 
 Press **⌃⌥⌘R** to start or stop recording from anywhere.
